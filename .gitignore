@@ -1,0 +1,25 @@
+# Arquivos privados de usuário e acervo de terceiros
+app/livros/
+app/data/catalog.js
+app/data/catalog.json
+app/data/catalog-metadata.js
+referencias/
+*.pdf
+*.zip
+*.tar.gz
+*.3det.json
+*.dav20.json
+dados/
+fichas.json*
+# Dependências, runtimes compilados e resultados de teste
+node_modules/
+tmp/
+dist/
+__pycache__/
+*.pyc
+*.log
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db

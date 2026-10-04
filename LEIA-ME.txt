@@ -1,0 +1,132 @@
+FORJA 3D&T ALPHA — versão 1.1.0
+Criador de fichas offline para Windows x64
+
+ATUALIZAR DAS VERSÕES 1.0.0 / 1.0.1
+Feche o aplicativo antigo e extraia este ZIP para uma NOVA pasta.
+Copie a pasta dados do aplicativo antigo para a nova pasta, ao lado
+do executável. Preserve a pasta antiga até conferir suas fichas.
+Também é possível usar Exportar backup completo e Importar.
+Os novos arquivos usam o formato 2: compartilhe com quem usa 1.1.0 ou superior.
+Números cortados pela versão antiga precisam de uma cópia original ou correção manual.
+
+DESEMPENHO NA VERSÃO 1.0.1
+O acervo é carregado apenas quando uma pesquisa é necessária.
+A primeira pesquisa prepara o índice em segundo plano; as seguintes
+reutilizam esse índice. A interface permanece disponível durante a carga.
+As gravações são assíncronas e a tela preserva seus elementos nas edições.
+
+NOVO NA VERSÃO 1.1.0
+- Modificadores altos, inclusive negativos, preservados ao salvar e compartilhar.
+- Campanha e ajustes: limite inicial configurável e modo livre; nenhum corte silencioso.
+- Modificadores: bônus nomeados por origem, com destino, ativação e duração.
+  Use Avançar rodada para descontar durações e Encerrar combate para desativar
+  os bônus correspondentes. Efeitos de rodadas expirados exigem novo prazo.
+- De onde vêm os números: abra cada cálculo para ver suas parcelas e origens.
+- Mesa de jogo: bônus distintos para ataque corporal, distância, defesa,
+  iniciativa, esquiva e testes; calculadora de dano entre escalas.
+- Criação guiada e variantes do básico. Custos de 122 opções conferidos;
+  17 resumos revisados. Os suplementos conservam a extração assistida.
+- Histórico de edições: desfazer/refazer até 30 alterações (máximo 10 MB),
+  inclusive exclusões. O histórico fica salvo neste dispositivo.
+  Atalhos Ctrl+Z / Ctrl+Y fora de campos de texto e botões no topo da janela.
+
+COMEÇAR
+1. Extraia TODO o ZIP para uma pasta onde você possa gravar arquivos.
+2. Abra Forja-3DeT.exe. Não abra o executável de dentro do ZIP.
+3. Crie seu personagem, escolha a pontuação em Campanha e ajustes
+   e distribua as características.
+4. Em Vantagens e perícias / Magias e kits, abra o catálogo, escolha
+   o livro e adicione suas opções. Confira custo, requisitos, variantes
+   e bônus na janela de detalhes e no PDF original.
+5. Use Compartilhar ficha para gerar um arquivo .3det.json.
+   Outra pessoa pode usar Importar para abrir uma cópia editável.
+6. O botão PDF salva uma ficha para impressão, com descrições e referências.
+
+O aplicativo não precisa de Node, Python, Java, conta ou conexão com internet.
+Requer Windows 10/11 de 64 bits. Não é uma versão para Windows 7/8 ou ARM nativo.
+A distribuição é portátil: preserve a pasta inteira, não apenas o .exe.
+Este executável não possui assinatura digital comercial.
+
+ONDE AS FICHAS FICAM
+No Windows portátil, ficam em dados/fichas.json, junto do aplicativo.
+Existe uma cópia anterior automática em dados/fichas.json.bak.
+Se essa pasta não puder ser criada, usa-se a pasta de dados do usuário do Windows.
+Feche o aplicativo antes de mover/copiar a pasta.
+Faça backups em Campanha e ajustes > Exportar backup completo.
+A importação adiciona novas cópias e nunca substitui fichas existentes.
+Se o arquivo principal estiver corrompido, tenta recuperar a cópia anterior.
+
+RECURSOS
+- Múltiplos personagens, cópias, retratos, identidade e história.
+- Características, orçamento, desvantagens e limites iniciais.
+- PV/PM e vantagens Pontos de Vida/Magia Extras.
+- Catálogo pesquisável do acervo local importado, com livro e página.
+- Vantagens, desvantagens, vantagens únicas, perícias e especializações.
+- Magias, gasto de PM, kits com custo progressivo e poderes personalizados.
+- Bônus permanentes, requisitos mínimos, ajustes e regras da casa.
+- Equipamentos, quantidades, peso, dinheiro, notas e itens equipados.
+- Ataque, defesa, iniciativa, críticos, testes, perícias e morte.
+- Condições de sessão, registro de rolagens, diário, PE e evolução.
+- Criação assistida de NPCs a partir das entradas de criaturas.
+- Pesquisa integral e abertura dos livros configurados localmente.
+- Salvamento automático, backup, fichas compartilháveis e exportação PDF.
+
+REGRAS E CONFERÊNCIA
+O núcleo numérico segue o Manual 3D&T Alpha revisado fornecido no ZIP.
+O catálogo agrega materiais oficiais e compilações opcionais sem apagar
+as diferenças de origem. A página indicada é a página do arquivo PDF,
+que pode ser diferente da numeração impressa.
+
+A extração dos catálogos é assistida, não uma revisão editorial integral.
+Algumas entradas podem ter títulos quebrados, textos fora de ordem ou
+custos incompletos. O PDF original é sempre a fonte final.
+Confirme as opções selecionadas: o aplicativo calcula o custo e os bônus
+que foram registrados, mas não interpreta automaticamente toda exceção
+narrativa, magia, pré-requisito composto ou poder dos suplementos.
+
+Bônus de algumas raças do básico são sugeridos; todos podem ser ajustados.
+Opções antigas conservam os efeitos salvos para não alterar fichas existentes.
+Ataque Especial permite escolher níveis I-X, F/PdF e variantes. O uso calcula
+FA, crítico e PM; penalidades de defesa/esquiva do alvo são informadas para
+aplicação manual. A variante Paralisante é resolvida pela fonte, sem gasto
+ou rolagem automática. Níveis acima de I geram aviso durante a criação.
+O botão de Arena registra H+2 até encerrar o combate; desligue ao sair do terreno.
+Bônus condicionais não devem ser gravados como bônus permanentes.
+Na Mesa de jogo, escolha o contexto de Armadura Extra, Vulnerabilidade,
+Invulnerabilidade e a escala do oponente. A calculadora recebe a FA e a FD
+completas nas escalas próprias e converte o dano uma única vez.
+Indefeso, Paralisado e Inconsciente retiram H e dado da defesa e impedem
+esquiva; Paralisado e Inconsciente também impedem ataques e iniciativa.
+Dano retira a condição Paralisado. Outros marcadores são narrativos.
+Teleporte/Aceleração oferecem o maior bônus em iniciativa e esquiva;
+gastos de PM e condições de ativação dessas vantagens ficam a cargo do jogador.
+Limites são avisos para revisão, não impedem regras autorizadas pelo mestre.
+
+ESPECIALIZAÇÕES: registre um pacote de até 3 especializações como uma
+opção de 1 ponto. A perícia completa normalmente custa 2 pontos.
+KITS: o primeiro custa 0, o segundo 1, o terceiro 2, e assim por diante.
+Cada kit dá um poder inicial gratuito. Registre a escolha nas notas do kit
+ou como Poder de kit de custo 0; cada poder adicional custa 1 ponto.
+MAGIAS: iniciais custam 0 pontos. Normalmente uma magia aprendida custa 1 PE.
+Selecione PE como moeda para debitar a aquisição no saldo disponível.
+Editar/remover uma aquisição depois não altera retroativamente os PE.
+EVOLUÇÃO: converter 10 PE libera 1 ponto de personagem. Gaste-o na ficha.
+RESTAURAR: é um comando manual; respeite as regras de descanso, cura e
+reparo de sua raça, mesmo que o aplicativo permita restaurar os recursos.
+
+ACERVO E CRÉDITOS
+Os PDFs e os textos integrais não acompanham o repositório público.
+Consulte README.md e FONTES.md para importar seu acervo local.
+Pacotes locais podem incluir os livros em resources/app/livros,
+conforme a opção de empacotamento escolhida.
+Sistema 3D&T criado por Marcelo Cassaro; títulos e ilustrações pertencem
+a seus respectivos autores e editoras. Há materiais oficiais e de fãs.
+Este projeto pessoal é independente, sem afiliação com a Jambô Editora.
+Para compartilhar só o personagem, envie o .3det.json; não é necessário
+reenviar o acervo inteiro.
+
+VALIDAÇÃO
+O núcleo e os fluxos de interface passaram nos testes em Linux/Electron.
+O executável Windows também abriu e salvou dados sob Wine, em perfil
+isolado. Ainda não foi homologado em um Windows físico.
+Veja VALIDACAO.md junto ao código-fonte para os detalhes.
