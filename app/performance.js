@@ -30,7 +30,7 @@ function patchApp(html){
    for(const attr of wanted.attributes)if(old.getAttribute(attr.name)!==attr.value)old.setAttribute(attr.name,attr.value);
    const focused=old===document.activeElement;
    if(old instanceof HTMLInputElement){if(!focused&&!old.dataset.preserve&&old.value!==wanted.value)old.value=wanted.value;if(old.type==='checkbox')old.checked=wanted.checked;continue}
-   if(old instanceof HTMLTextAreaElement){if(!focused&&old.value!==wanted.value)old.value=wanted.value;continue}
+   if(old instanceof HTMLTextAreaElement){if(!focused&&!old.dataset.preserve&&old.value!==wanted.value)old.value=wanted.value;continue}
    // Preserve live, non-model controls (roll modifier, journal draft, etc.).
    const selected=old instanceof HTMLSelectElement&&!old.dataset.field&&!old.id.startsWith('catalog-')&&!old.id.startsWith('library-')?old.value:null;
    sync(old,wanted);

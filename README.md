@@ -1,6 +1,6 @@
 # Forja 3D&T Alpha
 
-Criador offline de fichas 3D&T Alpha em português, com interface Electron. Mantém múltiplos personagens, modificadores altos, pontos, PV/PM, combate, inventário, evolução, desfazer/refazer, fichas JSON e exportação PDF. Versão do código: **1.1.0**.
+Criador de fichas 3D&T Alpha em português. Funciona offline e inclui controle de pontos, PV/PM, combate, inventário, evolução, histórico, fichas JSON e exportação PDF. Versão: **1.1.1**.
 
 Este repositório público contém o código, testes, documentação e a pequena camada de orientação do básico. **Os PDFs, textos integrais dos livros, fichas pessoais e binários não fazem parte do Git.** A criação de fichas funciona sem importar o acervo; catálogo e biblioteca passam a funcionar depois da configuração local abaixo.
 
@@ -43,13 +43,13 @@ Requer Python 3.11 ou superior. Baixe `electron-v43.7.7-win32-x64.zip` do [relea
 npm run build:windows
 ```
 
-Esse comando não inclui os PDFs. Para uma distribuição local completa, configure primeiro o acervo e execute:
+O pacote padrão não inclui PDFs, catálogo local nem fichas. Para uma distribuição de uso pessoal com o acervo, configure a biblioteca e execute:
 
 ```bash
 npm run build:windows -- --with-books
 ```
 
-O empacotador recusa sobrescrever uma distribuição existente, inclusive a pasta `dados`. Mova a versão anterior antes de reconstruir. Não regenere nem publique acervo, fichas ou livros inadvertidamente. Para usar o pacote, extraia todo o ZIP e abra `Forja-3DeT.exe`; o runtime acompanha o programa e não é necessário instalar Node/Python.
+O empacotador recusa sobrescrever uma distribuição existente. Para usar o pacote, extraia todo o ZIP e abra `Forja-3DeT.exe`. Não é necessário instalar Node ou Python.
 
 ## Verificações de interface
 

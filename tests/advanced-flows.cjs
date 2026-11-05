@@ -3,7 +3,7 @@ const {_electron:electron}=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const path=require('node:path'),fs=require('node:fs'),assert=require('node:assert/strict');
 const root=path.resolve('.'),profile=path.join(root,'tmp/advanced-profile'),out=path.join(root,'tmp/qa');fs.mkdirSync(out,{recursive:true});fs.rmSync(profile,{recursive:true,force:true});
 const config={executablePath:require('./runtime.cjs').electronPath(),args:['--no-sandbox','--disable-gpu',path.join(root,'app'),'--user-data-dir='+profile],env:{...process.env,ELECTRON_DISABLE_SECURITY_WARNINGS:'true'}};
-(async()=>{let app,page;const errors=[];try{
+(async()=>{let app,page,blockedSave;const errors=[];try{
  app=await electron.launch(config);page=await app.firstWindow();page.on('pageerror',e=>errors.push(e.message));await page.waitForSelector('h1');
  const go=async v=>page.locator(`.nav [data-view="${v}"]`).click();
  const field=async(k,v)=>{const el=page.locator(`[data-field="${k}"]`);await el.fill(String(v));await el.press('Tab')};
@@ -36,5 +36,36 @@ const config={executablePath:require('./runtime.cjs').electronPath(),args:['--no
  await go('personagem');await field('notes','Teste do histórico persistente');assert.equal(await page.locator('.topbar [data-action="undo"]').isEnabled(),true);await action('undo');assert.equal(await page.evaluate(()=>ch().notes),'');await page.evaluate(()=>flushSave());const selected=await page.evaluate(()=>ch().id);await app.close();app=null;
  app=await electron.launch(config);page=await app.firstWindow();page.on('pageerror',e=>errors.push(e.message));await page.waitForSelector('h1');assert.equal(await page.evaluate(()=>ch().id),selected);assert.equal(await page.evaluate(()=>ch().attrs.F),1500);assert.equal(await page.evaluate(()=>ch().modifiers.F),20000);assert.equal(await page.evaluate(()=>ch().modifiers.fd),-12000);assert.equal(await page.evaluate(()=>ch().items[0].effects.melee),1500);assert.equal(await page.evaluate(()=>ch().bonuses[0].value),50000);await action('redo');assert.equal(await page.evaluate(()=>ch().notes),'Teste do histórico persistente');
  await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows()[0].setSize(960,720));await go('modificadores');await page.screenshot({path:path.join(out,'modificadores-compacto.png'),fullPage:true});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false);
- assert.deepEqual(errors,[]);console.log('PASS: valores altos e negativos; modo livre; modificadores com duração; desfazer/refazer persistente; variantes guiadas; Ataque Especial; Arena; dano entre escalas; condições; JSON e PDF; validação sem cortes; janela compacta.');
-}catch(e){if(page)await page.screenshot({path:path.join(out,'advanced-failure.png'),fullPage:true}).catch(()=>{});console.error(e);process.exitCode=1}finally{if(app)await app.close()}})();
+ await go('sessao');await page.locator('#damage-fa').fill('20');await action('calculate-damage');assert.equal(await page.locator('[data-action="apply-damage"]').isEnabled(),true);
+ await page.locator('#damage-fa').fill('30');assert.equal(await page.locator('[data-action="apply-damage"]').isEnabled(),false);assert.equal(await page.locator('#damage-result').innerText(),'');
+ await action('calculate-damage');await page.locator('#damage-direction').selectOption('outgoing');assert.equal(await page.locator('[data-action="apply-damage"]').isEnabled(),false);
+
+ await page.locator('#journal-text').fill('Rascunho não registrado');await action('roll');assert.equal(await page.locator('#journal-text').inputValue(),'Rascunho não registrado');
+ await action('journal');assert.equal(await page.locator('#journal-text').inputValue(),'');assert.equal(await page.evaluate(()=>ch().journal.at(-1).text),'Rascunho não registrado');
+ await page.locator('#journal-text').fill('Rascunho de outra ficha');await page.locator('.roster button').first().click();assert.equal(await page.locator('#journal-text').inputValue(),'');
+
+ await action('new');await page.locator('#new-name').fill('a'.repeat(200));await action('create-character');await action('duplicate');
+ assert.equal(await page.evaluate(()=>ch().name.length),200);
+ assert.ok(await page.evaluate(()=>R.validateImport(R.pack([ch()]))[0].name.endsWith(' (cópia)')));
+
+ await page.locator('[data-attr="F"]').fill(String(Number.MAX_SAFE_INTEGER-1));await page.locator('[data-attr="F"]').press('Tab');
+ await go('modificadores');await action('new-bonus');await page.locator('#bonus-name').fill('Ajuste de teste');await page.locator('#bonus-target').selectOption('F');await page.locator('#bonus-value').fill('2');await page.locator('#bonus-enabled').uncheck();await action('save-bonus');await action('toggle-bonus');
+ assert.equal(await page.evaluate(()=>ch().bonuses[0].enabled),false);
+ assert.equal(await page.evaluate(()=>R.validateImport(R.pack([ch()]))[0].attrs.F),Number.MAX_SAFE_INTEGER-1);
+
+ await go('personagem');await page.evaluate(()=>flushSave());
+ blockedSave=path.join(await app.evaluate(({app})=>app.getPath('userData')),'fichas.json.tmp');
+ fs.mkdirSync(blockedSave);
+ await field('notes','A gravação pode ser tentada de novo.');await page.keyboard.press('Control+s');
+ await page.waitForFunction(()=>document.querySelector('#save-status').textContent.startsWith('Falha ao salvar'));
+ assert.notEqual(await page.locator('#toast').innerText(),'Ficha salva.');
+ const closeWarning=await app.evaluate(({BrowserWindow,dialog})=>new Promise((resolve,reject)=>{
+  const previous=dialog.showMessageBox,timer=setTimeout(()=>reject(Error('Aviso de gravação ausente')),5000);
+  dialog.showMessageBox=async(_window,options)=>{clearTimeout(timer);dialog.showMessageBox=previous;resolve(options.message);return {response:0}};
+  BrowserWindow.getAllWindows()[0].close();
+ }));
+ assert.match(closeWarning,/não foram salvas/);assert.equal(await page.evaluate(()=>ch().notes),'A gravação pode ser tentada de novo.');
+ fs.rmdirSync(blockedSave);blockedSave=null;
+ assert.equal(await page.evaluate(()=>flushSave()),true);
+ assert.deepEqual(errors,[]);console.log('PASS: valores altos e negativos; modo livre; modificadores com duração; desfazer/refazer persistente; variantes guiadas; Ataque Especial; Arena; dano entre escalas; condições; JSON e PDF; validação sem cortes; janela compacta; cálculos antigos descartados; rascunho do diário; nomes longos; ativação recusada sem corromper a ficha; erro e nova tentativa de gravação.');
+}catch(e){if(page)await page.screenshot({path:path.join(out,'advanced-failure.png'),fullPage:true}).catch(()=>{});console.error(e);process.exitCode=1}finally{if(blockedSave)fs.rmSync(blockedSave,{recursive:true,force:true});if(app)await app.close()}})();

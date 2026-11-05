@@ -2,9 +2,11 @@
 'use strict';
 const attrs=['F','H','R','A','PdF'],effectKeys=[...attrs,'pv','pm','fa','melee','ranged','fd','initiative','dodge','testF','testH','testR','testA','testPdF'];
 const scales=['Ningen','Sugoi','Kiodai','Kami'],MAX=Number.MAX_SAFE_INTEGER;
+const limits=Object.freeze({name:200,text:100000,characters:1000,items:2000,inventory:2000,bonuses:2000,journal:1000});
 const uid=()=>globalThis.crypto?.randomUUID?.()||Date.now().toString(36)+Math.random().toString(36).slice(2);
 const num=(n,d=0)=>Number.isFinite(Number(n))?Number(n):d;
-function number(value,label='Valor',min=-MAX,max=MAX,integer=false){const n=Number(value);if(value===''||value==null||!Number.isFinite(n)||Math.abs(n)>MAX||n<min||n>max||(integer&&!Number.isInteger(n)))throw Error(`${label}: informe ${integer?'um inteiro':'um número'} entre ${min.toLocaleString('pt-BR')} e ${max.toLocaleString('pt-BR')}. O valor não foi alterado.`);return n}
+function number(value,label='Valor',min=-MAX,max=MAX,integer=false){const n=typeof value==='number'?value:typeof value==='string'&&value.trim()?Number(value):NaN;if(!Number.isFinite(n)||Math.abs(n)>MAX||n<min||n>max||(integer&&!Number.isInteger(n)))throw Error(`${label}: informe ${integer?'um inteiro':'um número'} entre ${min.toLocaleString('pt-BR')} e ${max.toLocaleString('pt-BR')}.`);return n}
+function text(value,max=limits.text,label='Texto'){const s=String(value??'');if(s.length>max)throw Error(`${label}: limite de ${max.toLocaleString('pt-BR')} caracteres.`);return s}
 const safe=(n)=>number(n,'Resultado do cálculo');
 const clamp=(n,a,b)=>Math.min(b,Math.max(a,num(n)));
 const normalize=s=>String(s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
@@ -95,14 +97,13 @@ function endCombat(c){for(const b of c.bonuses||[])if(b.duration==='combat')b.en
 function skillTest(c,trained,difficulty,rng=Math.random){if(trained&&difficulty==='Fácil')return {automatic:true,success:true};if(!trained&&difficulty==='Difícil')return {impossible:true,success:false};const modifier=difficulty==='Fácil'?-1:difficulty==='Média'?(trained?1:-3):-2;return {...roll(c,'H',modifier,rng),modifier}}
 function deathResult(d){return ['Muito fraco: consciente, sem poder agir.','Inconsciente: recupera 1 PV após uma hora ou um teste bem-sucedido de Medicina.','Inconsciente: recupera 1 PV após uma hora ou um teste bem-sucedido de Medicina.','Quase morto: morrerá em 2d turnos. Medicina prolonga a vida por 1d horas; magia pode salvá-lo.','Quase morto: morrerá em 2d turnos. Medicina prolonga a vida por 1d horas; magia pode salvá-lo.','Morto.'][clamp(Math.trunc(d),1,6)-1]}
 function validateImport(raw,{preserveIds=false}={}){
- if(!raw||typeof raw!=='object'||![1,2].includes(raw.version)||!Array.isArray(raw.characters)||!raw.characters.length||raw.characters.length>1000)throw Error('Formato não reconhecido ou mais de 1.000 fichas. Importe um arquivo .3det.json do aplicativo.');
- const text=(v,max=100000)=>{const s=String(v??'');if(s.length>max)throw Error('Um campo de texto excede o tamanho permitido. Nenhum dado foi importado.');return s};
+ if(!raw||typeof raw!=='object'||![1,2].includes(raw.version)||!Array.isArray(raw.characters)||!raw.characters.length||raw.characters.length>limits.characters)throw Error('Formato não reconhecido ou mais de 1.000 fichas. Importe um arquivo .3det.json do aplicativo.');
  const val=(v,label,min=-MAX,integer=false,d=0)=>v==null?d:number(v,label,min,MAX,integer);
  const list=(v,max,label)=>{if(v==null)return [];if(!Array.isArray(v)||v.length>max)throw Error(`${label}: lista inválida ou acima de ${max} entradas.`);return v};
  const ids=new Set();
  return raw.characters.map(source=>{
   if(!source||!source.attrs||!Array.isArray(source.items))throw Error('Ficha incompleta ou corrompida.');
-  const c=create(text(source.name,200));if(preserveIds&&typeof source.id==='string'&&source.id.length<=200&&!ids.has(source.id))c.id=source.id;ids.add(c.id);
+  const c=create(text(source.name,limits.name,'Nome'));if(preserveIds&&typeof source.id==='string'&&source.id.length<=200&&!ids.has(source.id))c.id=source.id;ids.add(c.id);
   for(const k of ['player','campaign','concept','age','appearance','story','notes','damageMelee','damageRanged'])c[k]=text(source[k]);
   c.scale=scales.includes(source.scale)?source.scale:'Ningen';
   for(const k of ['budget','earnedPoints','xp','limitDisadvantages','cash'])c[k]=val(source[k],k,0);
@@ -111,16 +112,16 @@ function validateImport(raw,{preserveIds=false}={}){
   for(const k of effectKeys)c.modifiers[k]=val(source.modifiers?.[k],`Ajuste ${k}`);
   if(source.portrait){if(!/^data:image\/(png|jpeg|webp);base64,[a-z0-9+/=]+$/i.test(source.portrait)||source.portrait.length>6000000)throw Error('Retrato inválido ou muito grande.');c.portrait=source.portrait}
   for(const k of ['currentPV','currentPM'])c[k]=source[k]==null?null:val(source[k],k,0);
-  c.bonuses=list(source.bonuses,2000,'Modificadores').map(b=>{if(!effectKeys.includes(b.target))throw Error('Destino de modificador desconhecido.');return {id:preserveIds&&b.id?text(b.id,200):uid(),name:text(b.name,200),target:b.target,value:val(b.value,'Bônus'),enabled:b.enabled!==false,duration:['permanent','combat','rounds'].includes(b.duration)?b.duration:'permanent',remaining:val(b.remaining,'Rodadas',0,true),notes:text(b.notes)}});
+  c.bonuses=list(source.bonuses,limits.bonuses,'Modificadores').map(b=>{if(!effectKeys.includes(b.target))throw Error('Destino de modificador desconhecido.');return {id:preserveIds&&b.id?text(b.id,200):uid(),name:text(b.name,200),target:b.target,value:val(b.value,'Bônus'),enabled:b.enabled!==false,duration:['permanent','combat','rounds'].includes(b.duration)?b.duration:'permanent',remaining:val(b.remaining,'Rodadas',0,true),notes:text(b.notes)}});
   c.combat={...defaultCombat(),opponentScale:scales.includes(source.combat?.opponentScale)?source.combat.opponentScale:'Ningen',opponentH:val(source.combat?.opponentH,'H do oponente',0,true),armorMode:['normal','extra','vulneravel'].includes(source.combat?.armorMode)?source.combat.armorMode:'normal',invulnerable:!!source.combat?.invulnerable,scaleTests:!!source.combat?.scaleTests};
-  c.items=list(source.items,2000,'Opções').map(i=>({id:preserveIds&&i.id?text(i.id,200):uid(),name:text(i.name,200),category:['vantagem','desvantagem','unica','pericia','especializacao','magia','kit','poder','regra','criatura'].includes(i.category)?i.category:'regra',cost:val(i.cost,'Custo'),quantity:val(i.quantity,'Quantidade',1,true,1),currency:i.currency==='PE'?'PE':'pontos',text:text(i.text),notes:text(i.notes),book:text(i.book,200),page:val(i.page,'Página',1,true,1),needsReview:!!i.needsReview,confirmed:!!i.confirmed,effects:Object.fromEntries(effectKeys.map(k=>[k,val(i.effects?.[k],`Efeito ${k}`)])),requirements:Object.fromEntries(attrs.filter(k=>i.requirements?.[k]!=null).map(k=>[k,val(i.requirements[k],`Requisito ${k}`,0,true)])),requiredItems:list(i.requiredItems,50,'Exigências').map(v=>text(v,200)),choices:i.choices&&typeof i.choices==='object'?Object.fromEntries(Object.entries(i.choices).filter(([k,v])=>/^[a-zA-Z0-9_-]+$/.test(k)&&typeof v==='string').map(([k,v])=>[k,text(v,1000)])):{}}));
-  c.inventory=list(source.inventory,2000,'Inventário').map(i=>({id:preserveIds&&i.id?text(i.id,200):uid(),name:text(i.name,200),quantity:val(i.quantity,'Quantidade',0,true),weight:val(i.weight,'Peso',0),notes:text(i.notes),equipped:!!i.equipped}));
+  c.items=list(source.items,limits.items,'Opções').map(i=>({id:preserveIds&&i.id?text(i.id,200):uid(),name:text(i.name,200),category:['vantagem','desvantagem','unica','pericia','especializacao','magia','kit','poder','regra','criatura'].includes(i.category)?i.category:'regra',cost:val(i.cost,'Custo'),quantity:val(i.quantity,'Quantidade',1,true,1),currency:i.currency==='PE'?'PE':'pontos',text:text(i.text),notes:text(i.notes),book:text(i.book,200),page:val(i.page,'Página',1,true,1),needsReview:!!i.needsReview,confirmed:!!i.confirmed,effects:Object.fromEntries(effectKeys.map(k=>[k,val(i.effects?.[k],`Efeito ${k}`)])),requirements:Object.fromEntries(attrs.filter(k=>i.requirements?.[k]!=null).map(k=>[k,val(i.requirements[k],`Requisito ${k}`,0,true)])),requiredItems:list(i.requiredItems,50,'Exigências').map(v=>text(v,200)),choices:i.choices&&typeof i.choices==='object'?Object.fromEntries(Object.entries(i.choices).filter(([k,v])=>/^[a-zA-Z0-9_-]+$/.test(k)&&typeof v==='string').map(([k,v])=>[k,text(v,1000)])):{}}));
+  c.inventory=list(source.inventory,limits.inventory,'Inventário').map(i=>({id:preserveIds&&i.id?text(i.id,200):uid(),name:text(i.name,200),quantity:val(i.quantity,'Quantidade',0,true),weight:val(i.weight,'Peso',0),notes:text(i.notes),equipped:!!i.equipped}));
   c.conditions=list(source.conditions,40,'Condições').map(s=>text(s,100));
-  c.journal=list(source.journal,1000,'Diário').map(j=>({date:text(j.date,100),text:text(j.text)}));c.history=list(source.history,100,'Registro').map(j=>({date:text(j.date,100),text:text(j.text)}));
+  c.journal=list(source.journal,limits.journal,'Diário').map(j=>({date:text(j.date,100),text:text(j.text)}));c.history=list(source.history,100,'Registro').map(j=>({date:text(j.date,100),text:text(j.text)}));
   for(const k of ['createdAt','updatedAt'])if(source[k])c[k]=text(source[k],100);
   calculate(c);return c;
  });
 }
 function pack(characters){return {format:'Forja 3D&T Alpha',version:2,exportedAt:new Date().toISOString(),characters}}
-return {attrs,effectKeys,scales,MAX,uid,num,number,clamp,normalize,create,calculate,die,roll,damage,scaleFactor,advanceRound,endCombat,skillTest,deathResult,validateImport,pack};
+return {attrs,effectKeys,scales,MAX,limits,uid,num,number,text,clamp,normalize,create,calculate,die,roll,damage,scaleFactor,advanceRound,endCombat,skillTest,deathResult,validateImport,pack};
 });

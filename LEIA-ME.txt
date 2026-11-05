@@ -1,4 +1,4 @@
-FORJA 3D&T ALPHA — versão 1.1.0
+FORJA 3D&T ALPHA — versão 1.1.1
 Criador de fichas offline para Windows x64
 
 ATUALIZAR DAS VERSÕES 1.0.0 / 1.0.1

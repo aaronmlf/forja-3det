@@ -21,16 +21,29 @@ if a.with_books:
   if not file.is_file():raise SystemExit('PDF local ausente: '+b['file'])
   with file.open('rb') as stream:
    if hashlib.file_digest(stream,'sha256').hexdigest()!=b['sha256']:raise SystemExit('SHA-256 do PDF não confere: '+b['file'])
+
+def private_app_files(directory, names):
+ ignored=[]
+ for name in names:
+  if (name in {'livros','dados','node_modules','tmp','dist','referencias','__pycache__'}
+      or name.startswith(('fichas.json','.env'))
+      or name.lower().endswith(('.pdf','.3det.json','.dav20.json','.log'))
+      or (not a.with_books and name in {'catalog.js','catalog.json','catalog-metadata.js'})):
+   ignored.append(name)
+  elif (Path(directory)/name).is_symlink():
+   raise SystemExit('Atalho inesperado no código do aplicativo: '+name)
+ return ignored
+
 with tempfile.TemporaryDirectory(prefix='forja-build-',dir=DIST) as temp:
  staged=Path(temp)/NAME;staged.mkdir()
  with zipfile.ZipFile(RUNTIME) as z:z.extractall(staged)
  (staged/'electron.exe').replace(staged/'Forja-3DeT.exe')
  (staged/'resources/default_app.asar').unlink(missing_ok=True)
- shutil.copytree(ROOT/'app',staged/'resources/app',ignore=shutil.ignore_patterns('livros','node_modules','__pycache__','*.log'))
+ shutil.copytree(ROOT/'app',staged/'resources/app',ignore=private_app_files)
  if a.with_books:
   folder=staged/'resources/app/livros';folder.mkdir()
   for b in books:shutil.copy2(ROOT/'app/livros'/b['file'],folder/b['file'])
- for name in ['LEIA-ME.txt','README.md','FONTES.md','VALIDACAO.md','DIREITOS.md']:shutil.copy2(ROOT/name,staged/name)
+ for name in ['LEIA-ME.txt','README.md','CHANGELOG.md','FONTES.md','VALIDACAO.md','DIREITOS.md']:shutil.copy2(ROOT/name,staged/name)
  (staged/'dados').mkdir()
  assert not list((staged/'dados').iterdir())
  pending=Path(temp)/(NAME+'.zip')
@@ -41,4 +54,4 @@ with tempfile.TemporaryDirectory(prefix='forja-build-',dir=DIST) as temp:
  staged.replace(TARGET);pending.replace(ZIP)
 (DIST/(ZIP.name+'.sha256')).write_text(sha+'  '+ZIP.name+'\n',encoding='utf-8')
 print(f'Pacote: {ZIP}\nTamanho: {ZIP.stat().st_size/1024/1024:.1f} MiB\nSHA-256: {sha}')
-if not a.with_books:print('Os PDFs não foram incluídos. Catálogo local só acompanha o pacote se previamente configurado.')
+if not a.with_books:print('Pacote público sem PDFs, catálogo local ou fichas.')

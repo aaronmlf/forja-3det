@@ -14,5 +14,25 @@ ipcMain.handle('export',async(e,{data,name})=>{trusted(e);const {canceled,filePa
 ipcMain.handle('import',async e=>{trusted(e);const {canceled,filePaths}=await dialog.showOpenDialog(main,{title:'Importar ficha ou backup',filters:[{name:'Ficha 3D&T',extensions:['json']}],properties:['openFile']});if(canceled)return null;if(fs.statSync(filePaths[0]).size>100*1024*1024)throw Error('Arquivo muito grande.');return JSON.parse(fs.readFileSync(filePaths[0],'utf8'))});
 ipcMain.handle('pdf',async(e,html)=>{trusted(e);const {canceled,filePath}=await dialog.showSaveDialog(main,{defaultPath:'Ficha-3DeT.pdf',filters:[{name:'PDF',extensions:['pdf']}]});if(canceled)return false;const w=new BrowserWindow({show:false,webPreferences:{sandbox:true,nodeIntegration:false,contextIsolation:true}});w.webContents.setWindowOpenHandler(()=>({action:'deny'}));try{await w.loadURL('data:text/html;charset=utf-8,'+encodeURIComponent(html));const buf=await w.webContents.printToPDF({printBackground:true,pageSize:'A4',margins:{top:0.4,bottom:0.4,left:0.4,right:0.4}});fs.writeFileSync(filePath,buf);return filePath}finally{w.destroy()}});
 ipcMain.handle('source',async(e,{file,page})=>{trusted(e);const books=require('./data/books.json');if(!books.some(b=>b.file===file))throw Error('Livro desconhecido.');const f=path.join(__dirname,'livros',file);if(!fs.existsSync(f))throw Error('PDF não encontrado na pasta livros.');const w=new BrowserWindow({width:1150,height:850,title:'Biblioteca • Forja 3D&T',webPreferences:{sandbox:true,nodeIntegration:false,contextIsolation:true}});w.webContents.setWindowOpenHandler(()=>({action:'deny'}));w.webContents.on('will-navigate',(ev,url)=>{if(!url.startsWith(pathToFileURL(f).href))ev.preventDefault()});await w.loadURL(pathToFileURL(f).href+'#page='+Math.max(1,Number(page)||1));return true});
-app.whenReady().then(()=>{main=new BrowserWindow({width:1440,height:960,minWidth:900,minHeight:640,backgroundColor:'#101820',title:'Forja 3D&T Alpha',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});main.webContents.setWindowOpenHandler(()=>({action:'deny'}));main.webContents.on('will-navigate',e=>e.preventDefault());main.loadFile(path.join(__dirname,'index.html'));let closing=false;main.on('close',event=>{if(closing)return;event.preventDefault();main.webContents.executeJavaScript('typeof flushSave === \'function\' ? flushSave() : null').catch(()=>{}).finally(()=>{closing=true;main.close()})});});
+app.whenReady().then(()=>{
+ main=new BrowserWindow({width:1440,height:960,minWidth:900,minHeight:640,backgroundColor:'#101820',title:'Forja 3D&T Alpha',autoHideMenuBar:true,webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true}});
+ main.webContents.setWindowOpenHandler(()=>({action:'deny'}));
+ main.webContents.on('will-navigate',e=>e.preventDefault());
+ main.loadFile(path.join(__dirname,'index.html'));
+ let closing=false,checking=false;
+ main.on('close',async event=>{
+  if(closing)return;
+  event.preventDefault();
+  if(checking)return;
+  checking=true;
+  try{
+   const saved=await main.webContents.executeJavaScript('typeof saveBeforeClose !== "function" || saveBeforeClose()').catch(()=>false);
+   if(!saved){
+    const {response}=await dialog.showMessageBox(main,{type:'warning',message:'As alterações não foram salvas.',detail:'Mantenha a Forja aberta para tentar de novo ou exportar um backup.',buttons:['Continuar aberto','Fechar sem salvar'],defaultId:0,cancelId:0});
+    if(response!==1)return;
+   }
+   closing=true;main.close();
+  }finally{checking=false}
+ });
+});
 app.on('window-all-closed',()=>app.quit());
